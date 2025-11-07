@@ -1,35 +1,37 @@
-import Image from 'next/image';
-import { fromUnixTime, format } from 'date-fns';
-import Forecasts from './Forecasts';
-import { useSession } from 'next-auth/react';
-import { ICurrForecastData } from '@/utils/weatherInterfaces';
-import uuid from 'react-uuid';
-import { Session } from 'next-auth';
+import Image from "next/image";
+import { fromUnixTime, format } from "date-fns";
+import Forecasts from "./Forecasts";
+import { useSession } from "next-auth/react";
+import { ICurrForecastData } from "@/utils/weatherInterfaces";
+import uuid from "react-uuid";
+import { Session } from "next-auth";
 
 const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecastData) => {
   const { name, country, description, temp, humidity, wind_speed, visibility, feels_like, dt, sunrise, sunset, icon } = curr;
+  console.log(forecasts);
+
   // Format Dates
-  const formattedDt = format(fromUnixTime(dt), 'PPPP');
-  const formattedSunrise = format(fromUnixTime(sunrise), 'p');
-  const formattedSunset = format(fromUnixTime(sunset), 'p');
+  const formattedDt = format(fromUnixTime(dt), "PPPP");
+  // const formattedSunrise = format(fromUnixTime(sunrise), "p");
+  // const formattedSunset = format(fromUnixTime(sunset), "p");
   // Convert Kelvin to Celsius
-  const convertedTemp = (temp - 273.15).toFixed(0);
-  const convertedFeelsLike = (feels_like - 273.15).toFixed(0);
+  const convertedTemp = temp.toFixed(0);
+  const convertedFeelsLike = feels_like.toFixed(0);
   const { data: session }: any = useSession();
 
   console.log(session);
 
   const handleSaveCity = async () => {
     try {
-      const res = await fetch('/api/city/new', {
-        method: 'POST',
+      const res = await fetch("/api/city/new", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: session?.user?.id, name, country }),
       });
-      if (res.ok) return alert('City saved!');
-      if (res.status === 409) return alert('City already saved!');
+      if (res.ok) return alert("City saved!");
+      if (res.status === 409) return alert("City already saved!");
     } catch (error) {
       console.log(error);
     }
@@ -43,20 +45,12 @@ const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecast
           <h3 className="lg:text-4xl font-semibold text-gray-900 ml-5">
             {name}, {country}
           </h3>
-          <div className="flex justify-between items-start mb-10">
+          <div className="flex justify-between items-start mb-4">
             <div className="flex-1 flex justify-start items-center cursor-pointer">
-              <Image
-                src={`https://openweathermap.org/img/wn/${icon}@2x.png`}
-                alt="weather_image"
-                width={100}
-                height={100}
-                className="rounded-full object-contain"
-              />
-              <div className="flex mt-10">
-                <div className="flex flex-col">
-                  <h3 className="lg:text-4xl font-semibold text-gray-900">{convertedTemp}°C</h3>
-                  <p className="font-inter lg:text-1xl text-gray-500">{description}</p>
-                </div>
+              <Image src={`https:${icon}`} alt="weather_image" width={100} height={100} className="rounded-full object-contain" />
+              <div className="flex flex-col">
+                <h3 className="lg:text-4xl font-semibold text-gray-900">{convertedTemp}°C</h3>
+                <p className="font-inter lg:text-1xl text-gray-500">{description}</p>
               </div>
             </div>
           </div>
@@ -75,10 +69,10 @@ const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecast
             </div>
             <div className="flex-col ml-8 font-inter lg:text-lg text-gray-500">
               <p className="mb-2">
-                <span className="font-satoshi font-semibold text-gray-900">Sunrise:</span> {formattedSunrise}
+                <span className="font-satoshi font-semibold text-gray-900">Sunrise:</span> {sunrise}
               </p>
               <p>
-                <span className="font-satoshi font-semibold text-gray-900">Sunset:</span> {formattedSunset}
+                <span className="font-satoshi font-semibold text-gray-900">Sunset:</span> {sunset}
               </p>
             </div>
           </div>
@@ -86,9 +80,11 @@ const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecast
         </div>
         <div className="lg:ml-20 mt-5">
           <p className="lg:ml-20 font-satoshi font-semibold text-2xl ">7 day forecast</p>
+
           {forecasts.map((day) => (
             <Forecasts key={uuid()} dt={day.dt} temp={day.temp} weather={day.weather} />
           ))}
+
           <button className="ml-auto mt-5 black_btn" onClick={handleSaveCity}>
             Save
           </button>
