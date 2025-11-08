@@ -4,22 +4,31 @@ import Forecasts from "./Forecasts";
 import { useSession } from "next-auth/react";
 import { ICurrForecastData } from "@/utils/weatherInterfaces";
 import uuid from "react-uuid";
-import { Session } from "next-auth";
+import { useEffect, useState } from "react";
 
-const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecastData) => {
-  const { name, country, description, temp, humidity, wind_speed, visibility, feels_like, dt, sunrise, sunset, icon } = curr;
-  console.log(forecasts);
-
-  // Format Dates
+const Weather: React.FC<ICurrForecastData> = ({
+  curr,
+  forecasts,
+}: ICurrForecastData) => {
+  const {
+    name,
+    country,
+    description,
+    temp,
+    humidity,
+    wind_speed,
+    visibility,
+    feels_like,
+    dt,
+    sunrise,
+    sunset,
+    icon,
+  } = curr;
+  const [savedId, setSavedId] = useState<string | null>(null);
   const formattedDt = format(fromUnixTime(dt), "PPPP");
-  // const formattedSunrise = format(fromUnixTime(sunrise), "p");
-  // const formattedSunset = format(fromUnixTime(sunset), "p");
-  // Convert Kelvin to Celsius
   const convertedTemp = temp.toFixed(0);
   const convertedFeelsLike = feels_like.toFixed(0);
   const { data: session }: any = useSession();
-
-  console.log(session);
 
   const handleSaveCity = async () => {
     try {
@@ -30,12 +39,59 @@ const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecast
         },
         body: JSON.stringify({ userId: session?.user?.id, name, country }),
       });
-      if (res.ok) return alert("City saved!");
+      if (res.ok) {
+        const data = await res.json();
+        setSavedId(data._id);
+        return alert("City saved!");
+      }
       if (res.status === 409) return alert("City already saved!");
     } catch (error) {
       console.log(error);
     }
   };
+
+  const handleRemoveCity = async () => {
+    try {
+      const hasConfirmed = confirm(
+        "Are you sure you want to delete this city?"
+      );
+      if (hasConfirmed && savedId) {
+        try {
+          await fetch(`/api/city/delete/${savedId.toString()}`, {
+            method: "DELETE",
+          });
+          setSavedId(null);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const checkIfCitySaved = async () => {
+      try {
+        const savedCities = await fetch(
+          `/api/users/${session?.user?.id}/cities`
+        );
+        const data = await savedCities.json();
+        const cityExists = data.some(
+          (city: any) => city.name === name && city.country === country
+        );
+        if (cityExists) {
+          const existingCity = data.find(
+            (city: any) => city.name === name && city.country === country
+          );
+          setSavedId(existingCity._id);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    if (session?.user?.id) checkIfCitySaved();
+  }, [session?.user?.id, name, country]);
 
   return (
     <>
@@ -47,46 +103,83 @@ const Weather: React.FC<ICurrForecastData> = ({ curr, forecasts }: ICurrForecast
           </h3>
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1 flex justify-start items-center cursor-pointer">
-              <Image src={`https:${icon}`} alt="weather_image" width={100} height={100} className="rounded-full object-contain" />
+              <Image
+                src={`https:${icon}`}
+                alt="weather_image"
+                width={100}
+                height={100}
+                className="rounded-full object-contain"
+              />
               <div className="flex flex-col">
-                <h3 className="lg:text-4xl font-semibold text-gray-900">{convertedTemp}°C</h3>
-                <p className="font-inter lg:text-1xl text-gray-500">{description}</p>
+                <h3 className="lg:text-4xl font-semibold text-gray-900">
+                  {convertedTemp}°C
+                </h3>
+                <p className="font-inter lg:text-1xl text-gray-500">
+                  {description}
+                </p>
               </div>
             </div>
           </div>
-          <p className="lg:ml-5 font-satoshi font-semibold text-2xl">Feels like: {convertedFeelsLike}°C</p>
+          <p className="lg:ml-5 font-satoshi font-semibold text-2xl">
+            Feels like: {convertedFeelsLike}°C
+          </p>
           <div className="lg:ml-5 mt-7 flex items-start border-l border-gray-500">
             <div className="flex-col ml-3 font-inter lg:text-lg text-gray-500">
               <p className="mb-2">
-                <span className="font-satoshi font-semibold text-gray-900">Humidity:</span> {humidity}%
+                <span className="font-satoshi font-semibold text-gray-900">
+                  Humidity:
+                </span>{" "}
+                {humidity}%
               </p>
               <p className="mb-2">
-                <span className="font-satoshi font-semibold text-gray-900">Wind Speed:</span> {wind_speed} km/h
+                <span className="font-satoshi font-semibold text-gray-900">
+                  Wind Speed:
+                </span>{" "}
+                {wind_speed} km/h
               </p>
               <p>
-                <span className="font-satoshi font-semibold text-gray-900">Visibility:</span> {visibility / 1000} km
+                <span className="font-satoshi font-semibold text-gray-900">
+                  Visibility:
+                </span>{" "}
+                {visibility / 1000} km
               </p>
             </div>
             <div className="flex-col ml-8 font-inter lg:text-lg text-gray-500">
               <p className="mb-2">
-                <span className="font-satoshi font-semibold text-gray-900">Sunrise:</span> {sunrise}
+                <span className="font-satoshi font-semibold text-gray-900">
+                  Sunrise:
+                </span>{" "}
+                {sunrise}
               </p>
               <p>
-                <span className="font-satoshi font-semibold text-gray-900">Sunset:</span> {sunset}
+                <span className="font-satoshi font-semibold text-gray-900">
+                  Sunset:
+                </span>{" "}
+                {sunset}
               </p>
             </div>
           </div>
           {/* Forecast 7 days */}
         </div>
         <div className="lg:ml-20 mt-5">
-          <p className="lg:ml-20 font-satoshi font-semibold text-2xl ">7 day forecast</p>
+          <p className="lg:ml-20 font-satoshi font-semibold text-2xl ">
+            7 day forecast
+          </p>
 
           {forecasts.map((day) => (
-            <Forecasts key={uuid()} dt={day.dt} temp={day.temp} weather={day.weather} />
+            <Forecasts
+              key={uuid()}
+              dt={day.dt}
+              temp={day.temp}
+              weather={day.weather}
+            />
           ))}
 
-          <button className="ml-auto mt-5 black_btn" onClick={handleSaveCity}>
-            Save
+          <button
+            className="ml-auto mt-5 black_btn"
+            onClick={savedId ? handleRemoveCity : handleSaveCity}
+          >
+            {savedId ? "Remove from Saved" : "Save"}
           </button>
         </div>
       </div>

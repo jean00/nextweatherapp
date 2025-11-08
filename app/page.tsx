@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import Weather from "@/components/Weather";
 import { useRouter, useSearchParams } from "next/navigation";
-import { IAstronomy, ICurrent, IForecast, IWeatherData } from "@/utils/weatherInterfaces";
+import {
+  IAstronomy,
+  ICurrent,
+  IForecast,
+  IWeatherData,
+} from "@/utils/weatherInterfaces";
 import { weatherService } from "@/services/weatherService";
 import { format } from "date-fns";
 import { formatForecasts, formatWeatherData } from "@/utils/functions";
@@ -18,14 +23,31 @@ const Home = (): React.JSX.Element => {
   const router = useRouter();
   const { getForecast, getAstronomy } = weatherService();
 
-  useEffect(() => {
-    if (!searchCity) return;
-    getForecast(searchCity);
-  }, []);
+  const handleSearch = async (searchCity?: string) => {
+    const { location, current, forecast } = await getForecast(
+      searchCity || input
+    );
+    const { astronomy } = await getAstronomy(
+      input,
+      format(new Date(), "yyyy-MM-dd")
+    );
+    const daily = astronomy?.astro;
+    const currentForecast: ICurrent & IAstronomy["astro"] = {
+      ...current,
+      ...daily,
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => setInput(e.target.value);
+    const { name, country } = location;
+    setCurrWeather(formatWeatherData(name, country, currentForecast));
+    setForecasts(formatForecasts(forecast));
+  };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
+    setInput(e.target.value);
+
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault();
     // Reset error, forecasts, and currWeather
     setError(false);
@@ -33,26 +55,20 @@ const Home = (): React.JSX.Element => {
     setCurrWeather(null);
     // Fetch weather data
     try {
-      const { location, current, forecast } = await getForecast(input);
-      const { astronomy } = await getAstronomy(input, format(new Date(), "yyyy-MM-dd"));
-      const daily = astronomy.astro;
-      const currentForecast: ICurrent & IAstronomy["astro"] = {
-        ...current,
-        ...daily,
-      };
-
-      const { name, country } = location;
-      setCurrWeather(formatWeatherData(name, country, currentForecast));
-      console.log("aaaa", forecast);
-
-      setForecasts(formatForecasts(forecast));
+      handleSearch();
     } catch (err) {
       setError(true);
       setInput("");
     }
+
     // Reset pathname to /
     router.push("/", undefined);
   };
+
+  useEffect(() => {
+    if (!searchCity) return;
+    handleSearch(searchCity);
+  }, []);
 
   return (
     <section className="w-full flex-center flex-col">
