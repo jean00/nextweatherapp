@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import "dotenv/config";
 
 let isConnected = false; // track connection status
 export const connectToDB = async () => {
