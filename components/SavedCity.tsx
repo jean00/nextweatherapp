@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Session } from "next-auth";
 import { ISavedCity } from "@/utils/weatherInterfaces";
 
 interface IProps extends ISavedCity {

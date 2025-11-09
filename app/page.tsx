@@ -72,15 +72,21 @@ const Home = (): React.JSX.Element => {
 
   return (
     <section className="w-full flex-center flex-col">
-      <form className="relative w-full flex-center" onSubmit={handleSubmit}>
+      <form
+        className="search_input peer w-full flex justify-between"
+        onSubmit={handleSubmit}
+      >
         <input
           type="text"
           placeholder="Enter the country name"
           value={input}
           onChange={handleChange}
           required
-          className="search_input peer"
+          className="w-full focus:outline-none"
         />
+        <button type="submit" className="black_btn">
+          Search
+        </button>
       </form>
       {currWeather ? (
         <Weather curr={currWeather} forecasts={forecasts} />

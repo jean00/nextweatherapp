@@ -5,7 +5,7 @@ export const POST = async (req, res) => {
   const { userId, name, country } = await req.json();
   try {
     await connectToDB();
-    if (await City.findOne({ name: name, country: country })) {
+    if (await City.findOne({ creator: userId, name: name, country: country })) {
       return new Response('Failed to save the city', { status: 409 });
     }
     const newCity = new City({ creator: userId, name, country });

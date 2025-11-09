@@ -1,4 +1,4 @@
-import { Schema, model, models } from 'mongoose';
+import { Schema, model, models } from "mongoose";
 
 interface ICity {
   creator: {
@@ -16,17 +16,18 @@ interface ICity {
 const CitySchema = new Schema<ICity>({
   creator: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
   },
   name: {
     type: String,
-    unique: [true, 'City already exists'],
-    required: [true, 'City is required'],
+    required: [true, "City is required"],
   },
   country: String,
 });
 
+CitySchema.index({ name: 1, creator: 1 }, { unique: true });
+
 // Check if city exists, otherwise create a new city
-const City = models.City || model<ICity>('City', CitySchema);
+const City = models.City || model<ICity>("City", CitySchema);
 
 export default City;

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { ICurrForecastData } from "@/utils/weatherInterfaces";
 import uuid from "react-uuid";
 import { useEffect, useState } from "react";
+import { profileService } from "@/services/profileService";
 
 const Weather: React.FC<ICurrForecastData> = ({
   curr,
@@ -24,6 +25,7 @@ const Weather: React.FC<ICurrForecastData> = ({
     sunset,
     icon,
   } = curr;
+  const { getSavedCities, saveCity, deleteSavedCity } = profileService();
   const [savedId, setSavedId] = useState<string | null>(null);
   const formattedDt = format(fromUnixTime(dt), "PPPP");
   const convertedTemp = temp.toFixed(0);
@@ -32,19 +34,12 @@ const Weather: React.FC<ICurrForecastData> = ({
 
   const handleSaveCity = async () => {
     try {
-      const res = await fetch("/api/city/new", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId: session?.user?.id, name, country }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSavedId(data._id);
+      const res = await saveCity(session?.user?.id, name, country);
+      if (isNaN(parseInt(res))) {
+        setSavedId(res._id);
         return alert("City saved!");
       }
-      if (res.status === 409) return alert("City already saved!");
+      if (res === 409) return alert("City already saved!");
     } catch (error) {
       console.error(error);
     }
@@ -57,9 +52,7 @@ const Weather: React.FC<ICurrForecastData> = ({
       );
       if (hasConfirmed && savedId) {
         try {
-          await fetch(`/api/city/delete/${savedId.toString()}`, {
-            method: "DELETE",
-          });
+          await deleteSavedCity(savedId);
           setSavedId(null);
         } catch (err) {
           console.error(err);
@@ -73,19 +66,11 @@ const Weather: React.FC<ICurrForecastData> = ({
   useEffect(() => {
     const checkIfCitySaved = async () => {
       try {
-        const savedCities = await fetch(
-          `/api/users/${session?.user?.id}/cities`
-        );
-        const data = await savedCities.json();
-        const cityExists = data.some(
+        const savedCities = await getSavedCities(session?.user?.id);
+        const cityExists = savedCities.find(
           (city: any) => city.name === name && city.country === country
         );
-        if (cityExists) {
-          const existingCity = data.find(
-            (city: any) => city.name === name && city.country === country
-          );
-          setSavedId(existingCity._id);
-        }
+        if (cityExists) setSavedId(cityExists._id);
       } catch (error) {
         console.error(error);
       }
@@ -175,12 +160,14 @@ const Weather: React.FC<ICurrForecastData> = ({
             />
           ))}
 
-          <button
-            className="ml-auto mt-5 black_btn"
-            onClick={savedId ? handleRemoveCity : handleSaveCity}
-          >
-            {savedId ? "Remove from Saved" : "Save"}
-          </button>
+          {session?.user?.id && (
+            <button
+              className="ml-auto mt-5 black_btn"
+              onClick={savedId ? handleRemoveCity : handleSaveCity}
+            >
+              {savedId ? "Remove from Saved" : "Save"}
+            </button>
+          )}
         </div>
       </div>
     </>
