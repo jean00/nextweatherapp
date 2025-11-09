@@ -4,7 +4,7 @@ This is a weather forecast website built with Next.js, TypeScript, Tailwind CSS,
 
 ## Features
 
-- Fetches weather forecast data from the OpenWeatherAPI.
+- Fetches weather forecast data from the Weather API.
 - User authentication and session management using NextAuth.js.
 - Integration with MongoDB using Mongoose for CRUD operations.
 - Responsive and modern UI design with Tailwind CSS.
@@ -18,7 +18,7 @@ This is a weather forecast website built with Next.js, TypeScript, Tailwind CSS,
 - [NextAuth.js](https://next-auth.js.org/) - An authentication library for Next.js applications.
 - [Mongoose](https://mongoosejs.com/) - An object data modeling (ODM) library for MongoDB and Node.js.
 - [date-fns](https://date-fns.org/) - A library for manipulating, formatting, and parsing dates and times.
-- [OpenWeatherAPI](https://openweathermap.org/) - A weather data provider offering a RESTful API for accessing weather forecast data.
+- [Weather API](https://www.weatherapi.com/) - A weather data provider offering a RESTful API for accessing weather forecast data.
 
 ## Usage
 
