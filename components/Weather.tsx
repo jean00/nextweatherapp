@@ -46,7 +46,7 @@ const Weather: React.FC<ICurrForecastData> = ({
       }
       if (res.status === 409) return alert("City already saved!");
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -62,11 +62,11 @@ const Weather: React.FC<ICurrForecastData> = ({
           });
           setSavedId(null);
         } catch (err) {
-          console.log(err);
+          console.error(err);
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -87,7 +87,7 @@ const Weather: React.FC<ICurrForecastData> = ({
           setSavedId(existingCity._id);
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
     if (session?.user?.id) checkIfCitySaved();

@@ -12,7 +12,7 @@ export const POST = async (req, res) => {
     await newCity.save();
     return new Response(JSON.stringify(newCity), { status: 201 });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return new Response('Failed to save the city', { status: 500 });
   }
 };

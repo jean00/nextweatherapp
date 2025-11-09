@@ -13,10 +13,9 @@ const MyProfile = () => {
       try {
         const res = await fetch(`/api/users/${session?.user?.id}/cities`);
         const data = await res.json();
-        console.log("Fetched cities:", data);
         setSavedCities(data);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     };
     if (session?.user?.email) getSavedCities();
@@ -35,7 +34,7 @@ const MyProfile = () => {
         );
         setSavedCities(filteredPost);
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     }
   };
