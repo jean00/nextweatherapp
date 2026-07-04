@@ -4,8 +4,7 @@ import Forecasts from "./Forecasts";
 import { useSession } from "next-auth/react";
 import { ICurrForecastData } from "@/utils/weatherInterfaces";
 import uuid from "react-uuid";
-import { useEffect, useState } from "react";
-import { profileService } from "@/services/profileService";
+import { useSavedCity } from "@/hooks/use-saved-city";
 
 const Weather: React.FC<ICurrForecastData> = ({
   curr,
@@ -25,58 +24,15 @@ const Weather: React.FC<ICurrForecastData> = ({
     sunset,
     icon,
   } = curr;
-  const { getSavedCities, saveCity, deleteSavedCity } = profileService();
-  const [savedId, setSavedId] = useState<string | null>(null);
+  const { data: session }: any = useSession();
+  const { savedId, toggleSave } = useSavedCity(
+    name,
+    country,
+    session?.user?.id,
+  );
   const formattedDt = format(fromUnixTime(dt), "PPPP");
   const convertedTemp = temp.toFixed(0);
   const convertedFeelsLike = feels_like.toFixed(0);
-  const { data: session }: any = useSession();
-
-  const handleSaveCity = async () => {
-    try {
-      const res = await saveCity(session?.user?.id, name, country);
-      if (isNaN(parseInt(res))) {
-        setSavedId(res._id);
-        return alert("City saved!");
-      }
-      if (res === 409) return alert("City already saved!");
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleRemoveCity = async () => {
-    try {
-      const hasConfirmed = confirm(
-        "Are you sure you want to delete this city?"
-      );
-      if (hasConfirmed && savedId) {
-        try {
-          await deleteSavedCity(savedId);
-          setSavedId(null);
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    const checkIfCitySaved = async () => {
-      try {
-        const savedCities = await getSavedCities(session?.user?.id);
-        const cityExists = savedCities.find(
-          (city: any) => city.name === name && city.country === country
-        );
-        if (cityExists) setSavedId(cityExists._id);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    if (session?.user?.id) checkIfCitySaved();
-  }, [session?.user?.id, name, country]);
 
   return (
     <>
@@ -148,12 +104,12 @@ const Weather: React.FC<ICurrForecastData> = ({
         </div>
         <div className="lg:ml-20 mt-5">
           <p className="lg:ml-20 font-satoshi font-semibold text-2xl ">
-            7 day forecast
+            Weather Forecasts
           </p>
 
-          {forecasts.map((day) => (
+          {forecasts.map((day, index) => (
             <Forecasts
-              key={uuid()}
+              key={`${day.dt}-${index}`}
               dt={day.dt}
               temp={day.temp}
               weather={day.weather}
@@ -161,10 +117,7 @@ const Weather: React.FC<ICurrForecastData> = ({
           ))}
 
           {session?.user?.id && (
-            <button
-              className="ml-auto mt-5 black_btn"
-              onClick={savedId ? handleRemoveCity : handleSaveCity}
-            >
+            <button className="ml-auto mt-5 black_btn" onClick={toggleSave}>
               {savedId ? "Remove from Saved" : "Save"}
             </button>
           )}

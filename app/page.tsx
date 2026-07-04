@@ -2,73 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Weather from "@/components/Weather";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  IAstronomy,
-  ICurrent,
-  IForecast,
-  IWeatherData,
-} from "@/utils/weatherInterfaces";
-import { weatherService } from "@/services/weatherService";
-import { format } from "date-fns";
-import { formatForecasts, formatWeatherData } from "@/utils/functions";
+import { useSearchParams } from "next/navigation";
+import { useWeather } from "@/hooks/use-weather";
 
 const Home = (): React.JSX.Element => {
-  const [input, setInput] = useState<string>("");
-  const [currWeather, setCurrWeather] = useState<IWeatherData | null>(null);
-  const [forecasts, setForecasts] = useState<IForecast[]>([]);
-  const [error, setError] = useState<boolean>(false);
+  const [input, setInput] = useState("");
+  const { current, forecasts, error, fetchWeather } = useWeather();
   const searchParams = useSearchParams();
-  const searchCity = searchParams.get("search");
-  const router = useRouter();
-  const { getForecast, getAstronomy } = weatherService();
 
-  const handleSearch = async (searchCity?: string) => {
-    const { location, current, forecast } = await getForecast(
-      searchCity || input
-    );
-    const { astronomy } = await getAstronomy(
-      input,
-      format(new Date(), "yyyy-MM-dd")
-    );
-    const daily = astronomy?.astro;
-    const currentForecast: ICurrent & IAstronomy["astro"] = {
-      ...current,
-      ...daily,
-    };
-
-    const { name, country } = location;
-    setCurrWeather(formatWeatherData(name, country, currentForecast));
-    setForecasts(formatForecasts(forecast));
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void =>
-    setInput(e.target.value);
-
-  const handleSubmit = async (
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Reset error, forecasts, and currWeather
-    setError(false);
-    setForecasts([]);
-    setCurrWeather(null);
-    // Fetch weather data
-    try {
-      handleSearch();
-    } catch (err) {
-      setError(true);
-      setInput("");
-    }
-
-    // Reset pathname to /
-    router.push("/", undefined);
+    if (input) fetchWeather(input);
   };
 
   useEffect(() => {
-    if (!searchCity) return;
-    handleSearch(searchCity);
-  }, []);
+    const city = searchParams.get("search");
+    if (city) fetchWeather(city);
+  }, [searchParams]);
 
   return (
     <section className="w-full flex-center flex-col">
@@ -80,7 +30,7 @@ const Home = (): React.JSX.Element => {
           type="text"
           placeholder="Enter the country name"
           value={input}
-          onChange={handleChange}
+          onChange={(e) => setInput(e.target.value)}
           required
           className="w-full focus:outline-none"
         />
@@ -88,8 +38,8 @@ const Home = (): React.JSX.Element => {
           Search
         </button>
       </form>
-      {currWeather ? (
-        <Weather curr={currWeather} forecasts={forecasts} />
+      {current && forecasts ? (
+        <Weather curr={current} forecasts={forecasts} />
       ) : (
         error && <h1 className="mt-5">City/Country/State not found</h1>
       )}

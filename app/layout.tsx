@@ -1,11 +1,11 @@
-import '../styles/global.css';
-import type { Metadata } from 'next';
-import Nav from '../components/Nav';
-import Provider from '@/components/Provider';
+import "../styles/global.css";
+import type { Metadata } from "next";
+import Nav from "../components/Nav";
+import Provider from "@/components/Provider";
 
 export const metadata: Metadata = {
-  title: 'Weather site',
-  description: 'Forecast weather for your city',
+  title: "Weather site",
+  description: "Forecast weather for your city",
 };
 
 interface Props {

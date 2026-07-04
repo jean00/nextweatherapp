@@ -34,7 +34,7 @@ export const SavedCity = ({ data, onDelete }: IProps | any) => {
         {session?.user?.id === data.creator._id && pathName === "/profile" && (
           <button
             className="font-inter text-sm text-white mt-5 bg-red-400 rounded-lg w-24"
-            onClick={() => onDelete && onDelete(data)}
+            onClick={() => onDelete && onDelete(data._id)}
           >
             Delete
           </button>

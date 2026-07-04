@@ -1,13 +1,20 @@
+import { ISavedCity } from "@/utils/weatherInterfaces";
+
 export const profileService = () => {
-  const getSavedCities = async (userId: string | undefined) => {
+  const getSavedCities = async (
+    userId: string | undefined,
+  ): Promise<ISavedCity[]> => {
     const res = await fetch(`/api/users/${userId}/cities`);
 
-    if (res.ok) return await res.json();
-
-    return;
+    if (!res.ok) throw new Error("Failed to fetch saved cities");
+    return res.json();
   };
 
-  const saveCity = async (userId: string, name: string, country: string) => {
+  const saveCity = async (
+    userId: string,
+    name: string,
+    country: string,
+  ): Promise<ISavedCity> => {
     const res = await fetch("/api/city/new", {
       method: "POST",
       headers: {
@@ -16,12 +23,11 @@ export const profileService = () => {
       body: JSON.stringify({ userId, name, country }),
     });
 
-    if (res.ok) return await res.json();
-
-    return res.status;
+    if (!res.ok) throw new Error("Failed to save city");
+    return res.json();
   };
 
-  const deleteSavedCity = async (cityId: string) => {
+  const deleteSavedCity = async (cityId: string): Promise<void> => {
     await fetch(`/api/city/delete/${cityId}`, {
       method: "DELETE",
     });

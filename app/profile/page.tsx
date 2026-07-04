@@ -1,39 +1,26 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useSession } from "next-auth/react";
 import { SavedCity } from "@/components/SavedCity";
 import { ISavedCity } from "@/utils/weatherInterfaces";
-import { profileService } from "@/services/profileService";
+import { useSavedCitiesList } from "@/hooks/use-saved-cities-list";
 
 const MyProfile = () => {
-  const { getSavedCities, deleteSavedCity } = profileService();
   const { data: session }: any = useSession();
-  const [savedCities, setSavedCities] = useState([]);
+  const { savedCities, handleDeleteCity } = useSavedCitiesList(
+    session?.user?.id,
+  );
 
-  const getCities = async () => {
-    try {
-      const res = await getSavedCities(session?.user?.id);
-      setSavedCities(res);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleDelete = async (data: ISavedCity) => {
+  const handleDelete = async (id: string) => {
     const hasConfirmed = confirm("Are you sure you want to delete this city?");
     if (hasConfirmed) {
       try {
-        await deleteSavedCity(data._id);
-        await getCities();
+        await handleDeleteCity(id);
       } catch (err) {
         console.error(err);
       }
     }
   };
-
-  useEffect(() => {
-    if (session?.user?.email) getCities();
-  }, []);
 
   return (
     <section className="w-full">
